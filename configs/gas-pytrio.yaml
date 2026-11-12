@@ -1,0 +1,29 @@
+# Gas 真实数据本机对照；首批训练，其余九批按官方顺序预测。
+seed: 42
+model:
+  default_kind: lightgbm
+  alt_kind: logreg
+  random_state: 42
+  params:
+    n_estimators: 80
+    num_leaves: 15
+    n_jobs: 2
+harness:
+  enabled: true
+  credential_source: pytrio
+  base_url: https://pytrio.com/api/openai/v1
+  api_key: EMPTY
+  model: Qwen/Qwen3.8-27B
+  small_model: Qwen/Qwen3.8-27B
+  max_tokens: 1024
+  timeout_s: 60
+  retries: 0
+budget:
+  max_llm_tokens: 6000
+  max_compute_seconds: 3600
+  bootstrap_timeout_s: 120
+  action_timeout_s: 60
+log:
+  backend: jsonl
+  out_dir: runs/gas-pytrio
+playbook_path: null

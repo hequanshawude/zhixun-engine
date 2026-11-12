@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "selftrain"
+version = "0.1.0"
+description = "智训引擎 —— 工业模型自进化系统（漂移流上的受控 RSI）"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.26,<3",
+    "pandas>=2.0,<4",
+    "scikit-learn>=1.3,<2",
+    "lightgbm>=4.0,<5",
+    "PyYAML>=6.0",
+]
+
+[project.optional-dependencies]
+logging = ["swanlab>=0.4"]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+selftrain = "selftrain.cli:main"
+
+[tool.setuptools]
+packages = ["selftrain"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

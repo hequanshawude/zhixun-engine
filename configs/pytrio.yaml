@@ -1,0 +1,18 @@
+# 本机开发接入；正式离线赛场需另行核对网络协议。
+seed: 42
+harness:
+  enabled: true
+  credential_source: pytrio
+  base_url: https://pytrio.com/api/openai/v1
+  api_key: EMPTY
+  model: Qwen/Qwen3.8-27B
+  small_model: Qwen/Qwen3.8-27B
+  max_tokens: 1024
+  timeout_s: 60
+  retries: 0
+budget:
+  max_llm_tokens: 6000
+log:
+  backend: jsonl
+  out_dir: runs/pytrio
+playbook_path: null

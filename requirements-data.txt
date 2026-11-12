@@ -1,0 +1,2 @@
+# Optional acquisition dependency for the authors' public XJTU-SY MediaFire data.
+requests>=2.30,<3

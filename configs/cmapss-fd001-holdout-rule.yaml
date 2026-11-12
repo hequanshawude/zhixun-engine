@@ -1,0 +1,21 @@
+# FD001: 60 training engines, 10 fixed gate engines, 30 replay engines.
+# 本机 CPU 复跑用规则策略，不依赖云端；日志落本地 jsonl。
+seed: 42
+model:
+  default_kind: lightgbm
+  alt_kind: ridge
+  random_state: 42
+  params:
+    n_estimators: 80
+    num_leaves: 15
+    n_jobs: 2
+harness:
+  enabled: false
+budget:
+  max_compute_seconds: 3600
+  bootstrap_timeout_s: 120
+  action_timeout_s: 60
+log:
+  backend: jsonl
+  out_dir: runs/cmapss-fd001-holdout
+playbook_path: null

@@ -1,0 +1,64 @@
+# 智训引擎默认配置
+# 所有字段都能被 SystemConfig 同名 dataclass 接收；未知字段会被忽略。
+
+seed: 42
+
+drift:
+  psi_threshold: 0.20        # 单特征 PSI 超过即算漂移（业界经验值）
+  ks_alpha: 0.01
+  mmd_subsample: 300
+  n_top_features: 10
+  ph_delta: 0.005            # Page-Hinkley 容忍度
+  ph_lambda: 0.05            # Page-Hinkley 检测阈值
+  window: 5                  # 滚动窗口批数
+  severity_scale: 0.6
+
+model:
+  default_kind: hgb          # hgb / logreg / lightgbm / ridge
+  alt_kind: logreg           # switch_model 时切到这一族
+  random_state: 42
+  params:
+    max_iter: 120
+    learning_rate: 0.1
+    min_samples_leaf: 20
+    l2_regularization: 1.0
+
+gate:
+  min_gain: 0.002            # 主指标至少要比锚点高这么多才允许上线
+  max_drop: 0.02             # 跌这么多直接触发回滚
+  static_guard: 0.0          # 不得低于静态基线
+  rollback_on_breach: true
+  val_batches: 1
+  purge_batches: 0
+
+budget:
+  max_compute_seconds: 3600
+  max_llm_tokens: 200000
+  max_label_queries: 500
+  max_iterations: 200
+  bootstrap_timeout_s: 120   # 本地工程默认值，待官方限制公布后调整
+  action_timeout_s: 60
+  token_cost: 0.0005         # 每 token 折算的成本单位
+  label_cost: 2.0            # 每申请一次标注折算的成本单位
+
+harness:
+  enabled: false             # 评测时改成 true，并注入平台地址
+  base_url: "http://127.0.0.1:8000/v1"
+  api_key: "EMPTY"
+  model: "qwen3.8-27b"       # 疑难决策升档用
+  small_model: "qwen3.8-27b"  # 服务模型 ID 待平台确认；不得擅自使用未经许可来源
+  escalate_on: ["concept", "mixed"]
+  temperature: 0.0
+  max_tokens: 384
+  timeout_s: 30
+  retries: 2
+  cache: true
+
+log:
+  backend: auto              # auto / swanlab / jsonl / none
+  project: "zhixun-engine"
+  experiment: "run"
+  out_dir: "runs"
+  swanlab_mode: "online"
+
+playbook_path: "runs/playbook.json"

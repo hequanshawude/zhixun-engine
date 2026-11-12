@@ -1,0 +1,12 @@
+.venv/
+runs/
+out/
+data/
+tests/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.git/
+*.md
+~$*

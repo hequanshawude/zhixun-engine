@@ -1,0 +1,12 @@
+# 使用本机已登录的 SwanLab 账号；密钥不写入配置。
+seed: 42
+harness:
+  enabled: false
+log:
+  backend: swanlab
+  workspace: hequan
+  project: zhixunyinqing
+  out_dir: runs/cloud
+  swanlab_mode: online
+# 每次演练从相同策略状态出发。
+playbook_path: null

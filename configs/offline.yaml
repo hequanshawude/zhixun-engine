@@ -1,0 +1,7 @@
+# 本地及断网演练配置；资源数值是工程默认值，不是官方限制。
+harness:
+  enabled: false
+log:
+  backend: jsonl
+  out_dir: /out/runs
+playbook_path: /out/playbook.json

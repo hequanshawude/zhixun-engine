@@ -1,0 +1,5 @@
+# 仅刷新代码：复用本机已验证的依赖镜像，不下载新依赖。
+# 依赖发生变化时必须使用主 Dockerfile 完整构建。
+FROM zhixun-engine:preflight
+COPY selftrain /app/selftrain
+COPY configs /app/configs

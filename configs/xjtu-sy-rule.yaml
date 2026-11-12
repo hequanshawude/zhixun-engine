@@ -1,0 +1,25 @@
+﻿# XJTU-SY 轴承 RUL 回放：9 个轴承训练，6 个轴承分 3 批复现（每批 2 个，按工况 1→2→3）。
+# 本机 CPU 复跑用规则策略，不依赖云端；日志落本地 jsonl。
+seed: 42
+model:
+  default_kind: lightgbm
+  alt_kind: ridge
+  random_state: 42
+  params:
+    n_estimators: 80
+    num_leaves: 15
+    n_jobs: 2
+gate:
+  # MAE 在数百量级，必须用相对阈值，否则 0.002 的绝对门限等于没有
+  min_gain_rel: 0.02
+  max_drop_rel: 0.10
+harness:
+  enabled: false
+budget:
+  max_compute_seconds: 3600
+  bootstrap_timeout_s: 120
+  action_timeout_s: 60
+log:
+  backend: jsonl
+  out_dir: runs/xjtu-sy
+playbook_path: null

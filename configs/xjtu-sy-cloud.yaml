@@ -1,0 +1,27 @@
+# XJTU-SY 单次回放（规范化基准），记录到 SwanLab 云端。
+# 与 xjtu-sy-rule.yaml 的差别只有日志后端；随机种子、切分与阈值完全一致。
+seed: 42
+model:
+  default_kind: lightgbm
+  alt_kind: ridge
+  random_state: 42
+  params:
+    n_estimators: 80
+    num_leaves: 15
+    n_jobs: 2
+gate:
+  min_gain_rel: 0.02
+  max_drop_rel: 0.10
+harness:
+  enabled: false
+budget:
+  max_compute_seconds: 3600
+  bootstrap_timeout_s: 120
+  action_timeout_s: 60
+log:
+  backend: swanlab
+  workspace: hequan
+  project: zhixunyinqing
+  out_dir: runs/xjtu-sy-cloud
+  swanlab_mode: online
+playbook_path: null

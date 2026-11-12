@@ -1,0 +1,7 @@
+# 本机开发配置，无需登录云端即可运行。
+harness:
+  enabled: false
+log:
+  backend: jsonl
+  out_dir: runs
+playbook_path: null

@@ -1,0 +1,38 @@
+﻿# XJTU-SY 回放 + 自训练 Qwen3.5-4B LoRA 做策略决策，记录到 SwanLab 云端。
+# 权重来自 scripts/train_pytrio_policy.py（251 条真实状态卡、60 步 SFT）。
+# 赛题要求：驱动 Harness 的模型必须是选手在 PyTRiO 训练得到的，或官方 27B。
+seed: 42
+model:
+  default_kind: lightgbm
+  alt_kind: ridge
+  random_state: 42
+  params:
+    n_estimators: 80
+    num_leaves: 15
+    n_jobs: 2
+gate:
+  min_gain_rel: 0.02
+  max_drop_rel: 0.10
+harness:
+  enabled: true
+  credential_source: pytrio
+  base_url: https://pytrio.com/api/openai/v1
+  api_key: EMPTY
+  model: "trio://run_ifs2vac4k7l5/sampler_weights/zhixun-policy-v2"
+  small_model: "trio://run_ifs2vac4k7l5/sampler_weights/zhixun-policy-v2"
+  pytrio_base_model: "Qwen/Qwen3.5-4B"
+  max_tokens: 128
+  timeout_s: 90
+  retries: 0
+budget:
+  max_llm_tokens: 10000
+  max_compute_seconds: 3600
+  bootstrap_timeout_s: 120
+  action_timeout_s: 60
+log:
+  backend: swanlab
+  workspace: hequan
+  project: zhixunyinqing
+  out_dir: runs/xjtu-sy-4b
+  swanlab_mode: online
+playbook_path: null

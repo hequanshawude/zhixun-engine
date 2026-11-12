@@ -1,0 +1,32 @@
+# FD001: 60 training engines, 10 fixed gate engines, 30 replay engines.
+seed: 42
+model:
+  default_kind: lightgbm
+  alt_kind: ridge
+  random_state: 42
+  params:
+    n_estimators: 80
+    num_leaves: 15
+    n_jobs: 2
+harness:
+  enabled: true
+  credential_source: pytrio
+  base_url: https://pytrio.com/api/openai/v1
+  api_key: EMPTY
+  model: Qwen/Qwen3.8-27B
+  small_model: Qwen/Qwen3.8-27B
+  max_tokens: 128
+  timeout_s: 90
+  retries: 0
+budget:
+  max_llm_tokens: 10000
+  max_compute_seconds: 3600
+  bootstrap_timeout_s: 120
+  action_timeout_s: 60
+log:
+  backend: swanlab
+  workspace: hequan
+  project: zhixunyinqing
+  swanlab_mode: online
+  out_dir: runs/cmapss-fd001-holdout
+playbook_path: null

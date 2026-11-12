@@ -1,0 +1,24 @@
+# FD001 独立闸门回放（规范化基准），记录到 SwanLab 云端。
+# 与 cmapss-fd001-holdout-rule.yaml 的差别只有日志后端。
+seed: 42
+model:
+  default_kind: lightgbm
+  alt_kind: ridge
+  random_state: 42
+  params:
+    n_estimators: 80
+    num_leaves: 15
+    n_jobs: 2
+harness:
+  enabled: false
+budget:
+  max_compute_seconds: 3600
+  bootstrap_timeout_s: 120
+  action_timeout_s: 60
+log:
+  backend: swanlab
+  workspace: hequan
+  project: zhixunyinqing
+  out_dir: runs/cmapss-cloud
+  swanlab_mode: online
+playbook_path: null
