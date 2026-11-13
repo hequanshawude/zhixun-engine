@@ -135,12 +135,13 @@ class LLMPolicy:
 
 只输出 JSON：{"learning_rate": <数值>, "epochs": <整数>, "reason": "<20字以内>"}"""
 
-    def __init__(self, cfg, client=None) -> None:
+    def __init__(self, cfg, client=None, strict: bool = False) -> None:
         from .harness import PyTrioSamplingClient, LLMClient
 
         self.cfg = cfg
         self.tokens = 0
         self.last_source = "unavailable"
+        self.strict = strict
         if client is not None:
             self.client = client
         elif cfg.credential_source == "pytrio":
@@ -164,6 +165,8 @@ class LLMPolicy:
             self.last_source = "llm"
             return lr, ep, str(obj.get("reason", ""))[:60]
         except Exception:
+            if self.strict:
+                raise
             self.last_source = "table_fallback"
             lr, ep, _ = self.fallback.choose(card)
             return lr, ep, "大模型不可用，回退轮换表"

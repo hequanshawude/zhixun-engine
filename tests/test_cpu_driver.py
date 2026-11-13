@@ -77,6 +77,10 @@ def test_llm_policy_records_real_decision_source():
     assert policy.choose({"round": 2})[0] in LR_TABLE
     assert policy.last_source == "table_fallback"
 
+    strict_policy = LLMPolicy(SimpleNamespace(credential_source="env"), client=Broken(), strict=True)
+    with pytest.raises(RuntimeError, match="offline"):
+        strict_policy.choose({"round": 2})
+
 
 def test_cpu_multi_package_creates_separate_cloud_records(monkeypatch, tmp_path):
     created = []
