@@ -387,6 +387,9 @@ def run_cpu_rounds(package: Path, out: Path, rounds: int = 10,
         summary["predictor"] = str(out / "predictor" / "predict_scheme.py")
         summary["predictor_selection"] = selection
         summary["wall_clock_seconds"] = round(time.time() - started, 2)
+        # The official package remains mounted at /data. The writable copy is
+        # only needed while fitting and would exceed the output size limit.
+        shutil.rmtree(pkg.root / "public")
     (out / "rounds-ledger.jsonl").write_text(
         "".join(json.dumps(x, ensure_ascii=False) + "\n" for x in ledger), encoding="utf-8")
     (out / "summary.json").write_text(json.dumps(summary, ensure_ascii=False, indent=2),
