@@ -1,0 +1,7 @@
+# Build the dependency image with the repository Dockerfile first.
+FROM zhixun-engine:preflight
+WORKDIR /app
+COPY selftrain ./selftrain
+COPY scripts/scheme_v2.py scripts/predict_scheme.py scripts/gas_pair_gate.py scripts/rul_tree_correction.py ./scripts/
+ENV ZHIXUN_SCHEME_V2=1
+CMD ["cpu", "--packages-root", "/data", "--out", "/out", "--rounds", "10", "--widen", "auto", "--driver", "llm", "--model", "trio://run_gxpt6e6iux26/sampler_weights/zhixun-cpu-policy-27b-v1", "--base-model", "Qwen/Qwen3.8-27B"]

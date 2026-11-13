@@ -16,6 +16,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -375,6 +376,14 @@ def run_cpu_rounds(package: Path, out: Path, rounds: int = 10,
         "start_metric": start_metric,
         "stability": _stability(ledger, pkg, start_metric),
     }
+    if os.getenv("ZHIXUN_SCHEME_V2") == "1":
+        fitting_script = Path(__file__).resolve().parents[1] / "scripts" / "scheme_v2.py"
+        subprocess.run([sys.executable, str(fitting_script), "--profile", pkg.profile,
+                        "--package", str(pkg.root), "--out", str(out)], check=True)
+        selection = json.loads((out / "predictor" / "selection.json").read_text(encoding="utf-8"))
+        summary["predictor"] = str(out / "predictor" / "predict_scheme.py")
+        summary["predictor_selection"] = selection
+        summary["wall_clock_seconds"] = round(time.time() - started, 2)
     (out / "rounds-ledger.jsonl").write_text(
         "".join(json.dumps(x, ensure_ascii=False) + "\n" for x in ledger), encoding="utf-8")
     (out / "summary.json").write_text(json.dumps(summary, ensure_ascii=False, indent=2),

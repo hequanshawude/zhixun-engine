@@ -226,6 +226,7 @@ def build_parser() -> argparse.ArgumentParser:
     c.add_argument("--driver", default="table", choices=["table", "llm"],
                    help="table=固定轮换学习率；llm=PyTRiO 大模型逐轮决策")
     c.add_argument("--model", default="Qwen/Qwen3.8-27B")
+    c.add_argument("--base-model", default="Qwen/Qwen3.5-4B", help="Base model for a saved sampler")
     c.add_argument("--widen", default="auto",
                    help="第 1 轮前 Net2Net 加宽的宽度：auto=按 profile 用调优表，0=不改结构，或直接给整数")
     c.add_argument("--cloud", action="store_true", help="记录到 SwanLab")
@@ -250,7 +251,7 @@ def cmd_cpu(args) -> int:
 
             harness = HarnessConfig(credential_source="pytrio",
                                     base_url="https://pytrio.com/api/openai/v1",
-                                    model=args.model, small_model=args.model,
+                                    model=args.model, small_model=args.model, pytrio_base_model=args.base_model,
                                     max_tokens=128, timeout_s=90, retries=0)
             configure_credentials(harness)
             return LLMPolicy(harness)
