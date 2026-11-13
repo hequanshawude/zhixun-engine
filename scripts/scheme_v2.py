@@ -35,7 +35,7 @@ def fit_correction(tag, base, checkpoint, train, destination):
         x = np.vstack([x, x + rng.normal(size=x.shape) * base.scale * 0.005,
                        x + rng.normal(size=x.shape) * base.scale * 0.015])
         y = np.tile(y, 3) - base.predict(x)
-        forest = ExtraTreesRegressor(n_estimators=32, max_depth=14, min_samples_leaf=45,
+        forest = ExtraTreesRegressor(n_estimators=32, max_depth=16, min_samples_leaf=60,
                                      max_features=0.85, random_state=37, n_jobs=3)
     scale = base.meta["target_scale"]
     forest.fit(x, y / scale)
