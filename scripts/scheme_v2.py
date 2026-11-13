@@ -26,8 +26,8 @@ def fit_correction(tag, base, checkpoint, train, destination):
     from rul_tree_correction import CorrectedModel, save_forest
 
     if tag == "B":
-        mode, blend = "direct", 0.5
-        forest = ExtraTreesRegressor(n_estimators=32, max_depth=9, min_samples_leaf=12,
+        mode, blend = "direct", 0.65
+        forest = ExtraTreesRegressor(n_estimators=32, max_depth=14, min_samples_leaf=32,
                                      max_features=0.8, random_state=42, n_jobs=2)
     else:
         mode, blend = "residual", 0.65
