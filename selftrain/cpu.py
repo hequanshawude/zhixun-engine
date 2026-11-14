@@ -265,6 +265,14 @@ def _prepare_package(pkg: CpuPackage, out: Path) -> CpuPackage:
     shutil.copytree(pkg.root, work)
     status = ensure_best_epoch_patch(work / "baselines" / "train.py")
     print(f"[init] 工作副本 {work.name}，train.py 补丁: {status}", flush=True)
+    if os.getenv("ZHIXUN_HYBRID_CHECKPOINT") == "1" and pkg.profile in ("B", "C"):
+        from .hybrid_checkpoint import patch_dual_model_source, patch_model_source
+
+        if pkg.profile == "C" and os.getenv("ZHIXUN_DUAL_C") == "1":
+            patch_dual_model_source(work / "baselines" / "model.py")
+        else:
+            patch_model_source(work / "baselines" / "model.py")
+        print("[init] B/C 检查点支持公开训练集生成的修正树", flush=True)
     train = work / "public" / "train.jsonl"
     if os.getenv("ZHIXUN_CHECKPOINT_V2") == "1" and pkg.profile == "B":
         from .checkpoint_v2 import balanced_b_train
@@ -300,7 +308,8 @@ def _widen(pkg: CpuPackage, out: Path, hidden: int) -> tuple[Path, Path]:
 
 def run_cpu_rounds(package: Path, out: Path, rounds: int = 10,
                    policy: Any = None, logger: Any = None,
-                   widen_to: Optional[int | Dict[str, int]] = None) -> Dict[str, Any]:
+                   widen_to: Optional[int | Dict[str, int]] = None,
+                   dual_reference: bool = False) -> Dict[str, Any]:
     """跑满 N 轮，返回最终采纳的检查点与逐轮账本。"""
     pkg = load_package(package)
     out = Path(out).resolve()
@@ -407,6 +416,80 @@ def run_cpu_rounds(package: Path, out: Path, rounds: int = 10,
         fitting_script = Path(__file__).resolve().parents[1] / "scripts" / "scheme_v2.py"
         subprocess.run([sys.executable, str(fitting_script), "--profile", pkg.profile,
                         "--package", str(pkg.root), "--out", str(out)], check=True)
+        if (os.getenv("ZHIXUN_HYBRID_CHECKPOINT") == "1" and pkg.profile in ("B", "C")
+                and not (pkg.profile == "C" and os.getenv("ZHIXUN_DUAL_C") == "1")):
+            from .hybrid_checkpoint import embed_correction
+
+            correction = out / "predictor" / "correction.npz"
+            if correction.exists():
+                hybrid_path = out / "hybrid-checkpoint.npz"
+                summary["hybrid"] = embed_correction(final_path, correction, hybrid_path)
+                shutil.copyfile(hybrid_path, final_path)
+                sys.path.insert(0, str(pkg.root))
+                from baselines.data import read_dataset
+                from baselines.model import Model
+                from baselines.train import metrics
+
+                hybrid_model = Model.load(final_path)
+                validation = read_dataset(pkg.validation, pkg.task,
+                                          hybrid_model.meta["classes"], hybrid_model.meta["paths"])
+                hybrid_score = metrics(hybrid_model, validation)[pkg.metric]
+                selected = json.loads((out / "predictor" / "selection.json").read_text(encoding="utf-8"))["selected"][pkg.metric]
+                if abs(hybrid_score - selected) > 1e-8:
+                    raise RuntimeError(f"混合检查点与原修正预测不一致: {hybrid_score} != {selected}")
+                summary["final"] = hybrid_score
+                summary["delta"] = pkg.baseline[pkg.metric] - hybrid_score
+                summary["hybrid"]["validation_score"] = hybrid_score
+        if (os.getenv("ZHIXUN_DUAL_C") == "1" and pkg.profile == "C"
+                and not dual_reference):
+            import importlib.util
+            from .hybrid_checkpoint import embed_dual_c
+
+            reference_out = out / "reference-branch"
+            reference = run_cpu_rounds(package, reference_out, rounds=rounds,
+                                       policy=TablePolicy(), widen_to=widen_to,
+                                       dual_reference=True)
+            if reference["rounds"] != rounds:
+                raise RuntimeError("C reference branch has the wrong round count")
+            guided_bundle = out / "predictor"
+            reference_bundle = reference_out / "predictor"
+            dual_path = out / "dual-checkpoint.npz"
+            summary["dual"] = embed_dual_c(
+                reference_bundle / "checkpoint.npz", reference_bundle / "correction.npz",
+                guided_bundle / "checkpoint.npz", guided_bundle / "correction.npz",
+                dual_path)
+            shutil.copyfile(dual_path, final_path)
+            source_file = pkg.root / "baselines" / "model.py"
+            module_spec = importlib.util.spec_from_file_location("contest_c_dual_model", source_file)
+            module = importlib.util.module_from_spec(module_spec)
+            module_spec.loader.exec_module(module)
+            sys.path.insert(0, str(pkg.root))
+            from baselines.data import read_dataset
+
+            dual_model = module.Model.load(final_path)
+            validation = read_dataset(pkg.validation, "regression", [], dual_model.meta["paths"])
+            error = dual_model.predict(validation["x"]) - validation["y"]
+            dual_rmse = float((error @ error / len(error)) ** 0.5)
+            summary["final"] = dual_rmse
+            summary["delta"] = pkg.baseline["rmse"] - dual_rmse
+            summary["dual"]["validation_rmse"] = dual_rmse
+            summary["dual"]["reference_rounds"] = reference["rounds"]
+            summary["dual"]["guided_rounds"] = rounds
+            shutil.copyfile(final_path, guided_bundle / "checkpoint.npz")
+            selection_path = guided_bundle / "selection.json"
+            dual_selection = json.loads(selection_path.read_text(encoding="utf-8"))
+            dual_selection["accepted"] = False
+            dual_selection["selected"] = {
+                "rmse": dual_rmse, "mae": float(abs(error).mean())}
+            dual_selection["dual_embedded_in_checkpoint"] = True
+            selection_path.write_text(json.dumps(dual_selection, indent=2), encoding="utf-8")
+            guided_ledger = ledger
+            reference_ledger = [json.loads(line) for line in
+                                (reference_out / "rounds-ledger.jsonl").read_text(encoding="utf-8").splitlines()]
+            (out / "dual-rounds-ledger.jsonl").write_text(
+                "".join(json.dumps({"round": i + 1, "guided": guided_ledger[i],
+                                     "reference": reference_ledger[i]}, ensure_ascii=False) + "\n"
+                        for i in range(rounds)), encoding="utf-8")
         if os.getenv("ZHIXUN_CHECKPOINT_V2") == "1" and pkg.profile == "C":
             distill_script = Path(__file__).resolve().parents[1] / "scripts" / "distill_c_checkpoint.py"
             distill_dir = out / "readout"
