@@ -203,3 +203,134 @@ def embed_dual_c(reference_base: Path, reference_correction: Path,
             info.external_attr = 0o600 << 16
             archive.writestr(info, buffer.getvalue())
     return metadata["dual"]
+
+
+GAS_KEYS = ("pos", "neg", "cut", "masks", "ks", "cuts", "base_digest")
+
+MODEL_PATCH_GAS = '''
+_GAS_BASE_LOAD = Model.load.__func__
+_GAS_BASE_PREDICT = Model.predict
+_GAS_BASE_SAVE = Model.save
+_GAS_KEYS = ("pos", "neg", "cut", "masks", "ks", "cuts", "base_digest")
+
+def _gas_load(cls, path):
+    path = Path(path)
+    if path.is_symlink() or not path.is_file() or path.stat().st_size > MAX_CHECKPOINT_BYTES:
+        raise ValueError("invalid gas checkpoint file")
+    with zipfile.ZipFile(path) as archive:
+        names = [entry.filename for entry in archive.infolist()]
+        if "gas_pos.npy" not in names:
+            return _GAS_BASE_LOAD(cls, path)
+        core = {*PARAMETERS, *("adam_first_" + k for k in PARAMETERS),
+                *("adam_second_" + k for k in PARAMETERS), "mean", "scale", "metadata"}
+        expected = {name + ".npy" for name in core} | {"gas_" + name + ".npy" for name in _GAS_KEYS}
+        if len(names) != len(expected) or set(names) != expected or sum(e.file_size for e in archive.infolist()) > MAX_CHECKPOINT_BYTES:
+            raise ValueError("invalid gas checkpoint archive")
+    with np.load(path, allow_pickle=False) as arrays:
+        model = cls.__new__(cls)
+        model.meta = json.loads(str(arrays["metadata"]))
+        model.params = {key: arrays[key].copy() for key in PARAMETERS}
+        model.first = {key: arrays["adam_first_" + key].copy() for key in PARAMETERS}
+        model.second = {key: arrays["adam_second_" + key].copy() for key in PARAMETERS}
+        model.mean, model.scale = arrays["mean"].copy(), arrays["scale"].copy()
+        model.gas_gate = {key: arrays["gas_" + key].copy() for key in _GAS_KEYS}
+    model.validate()
+    gate = model.gas_gate
+    if model.meta["task"] != "classification" or gate["pos"].ndim != 2 or gate["neg"].shape[1:] != gate["pos"].shape[1:]:
+        raise ValueError("invalid gas gate shape")
+    if gate["masks"].shape[1] != gate["pos"].shape[1] or len(gate["ks"]) != len(gate["cuts"]) or len(gate["ks"]) != len(gate["masks"]):
+        raise ValueError("invalid gas gate confirmations")
+    return model
+
+def _gas_nearest_mean(distances, k):
+    return np.partition(distances, int(k) - 1, axis=1)[:, :int(k)].mean(axis=1)
+
+def _gas_distances(x, prototypes):
+    return np.linalg.norm(x[:, None, :] - prototypes[None, :, :], axis=2)
+
+def _gas_predict(self, x):
+    scores = _GAS_BASE_PREDICT(self, x)
+    if not hasattr(self, "gas_gate"):
+        return scores
+    gate = self.gas_gate
+    ethanol = self.meta["classes"].index("Ethanol")
+    acetaldehyde = self.meta["classes"].index("Acetaldehyde")
+    predicted = scores.argmax(1)
+    for start in range(0, len(x), 512):
+        chunk = x[start:start + 512]
+        choose = predicted[start:start + len(chunk)] == ethanol
+        if not choose.any():
+            continue
+        sub = self.normalized(chunk[choose])[:, 1::8]
+        pos = _gas_distances(sub, gate["pos"]).min(1)
+        neg = _gas_distances(sub, gate["neg"]).min(1)
+        passed = pos < float(gate["cut"]) * neg
+        for mask, k, cut in zip(gate["masks"], gate["ks"], gate["cuts"]):
+            pending = np.flatnonzero(passed)
+            if not len(pending):
+                break
+            smaller = sub[pending][:, mask]
+            dpos = _gas_nearest_mean(_gas_distances(smaller, gate["pos"][:, mask]), k)
+            dneg = _gas_nearest_mean(_gas_distances(smaller, gate["neg"][:, mask]), k)
+            passed[pending] = dpos < float(cut) * dneg
+        hits = start + np.flatnonzero(choose)[passed]
+        scores[hits, acetaldehyde], scores[hits, ethanol] = scores[hits, ethanol].copy(), scores[hits, acetaldehyde].copy()
+    return scores
+
+def _gas_save(self, path):
+    if not hasattr(self, "gas_gate"):
+        return _GAS_BASE_SAVE(self, path)
+    self.validate()
+    arrays = {**self.params, **{"adam_first_" + k: v for k, v in self.first.items()},
+              **{"adam_second_" + k: v for k, v in self.second.items()},
+              "mean": self.mean, "scale": self.scale,
+              "metadata": np.array(json.dumps(self.meta, sort_keys=True, separators=(",", ":"), allow_nan=False))}
+    arrays.update({"gas_" + k: v for k, v in self.gas_gate.items()})
+    with Path(path).open("xb") as stream, zipfile.ZipFile(stream, "w", compression=zipfile.ZIP_STORED) as archive:
+        for name in sorted(arrays):
+            buffer = io.BytesIO()
+            np.lib.format.write_array(buffer, arrays[name], allow_pickle=False)
+            info = zipfile.ZipInfo(name + ".npy", date_time=(1980, 1, 1, 0, 0, 0))
+            info.external_attr = 0o600 << 16
+            archive.writestr(info, buffer.getvalue())
+
+Model.load = classmethod(_gas_load)
+Model.predict = _gas_predict
+Model.save = _gas_save
+'''
+
+
+def patch_gas_model_source(source: Path) -> None:
+    text = source.read_text(encoding="utf-8")
+    if "_gas_load" in text:
+        return
+    if "class Model:" not in text or "def checkpoint_digest(" not in text:
+        raise ValueError("Unexpected official gas model source")
+    source.write_text(text + MODEL_PATCH_GAS, encoding="utf-8")
+
+
+def embed_gas_gate(base: Path, correction: Path, destination: Path) -> dict:
+    if destination.exists():
+        raise FileExistsError(destination)
+    base_sha = hashlib.sha256(base.read_bytes()).hexdigest()
+    with np.load(base, allow_pickle=False) as source:
+        arrays = {key: source[key].copy() for key in source.files}
+    with np.load(correction, allow_pickle=False) as source:
+        if set(source.files) != set(GAS_KEYS) or str(source["base_digest"]) != base_sha:
+            raise ValueError("Gas gate is not bound to base checkpoint")
+        arrays.update({"gas_" + key: source[key].copy() for key in GAS_KEYS})
+    metadata = json.loads(str(arrays["metadata"]))
+    if metadata["task"] != "classification" or metadata["profile"] != "A":
+        raise ValueError("Gas gate requires profile A")
+    metadata["gas_gate"] = {"method": "public_train_fitted_pair_confirmation",
+                            "parent_checkpoint_sha256": base_sha,
+                            "correction_sha256": hashlib.sha256(correction.read_bytes()).hexdigest()}
+    arrays["metadata"] = np.array(json.dumps(metadata, sort_keys=True, separators=(",", ":"), allow_nan=False))
+    with destination.open("xb") as stream, zipfile.ZipFile(stream, "w", compression=zipfile.ZIP_STORED) as archive:
+        for name in sorted(arrays):
+            buffer = io.BytesIO()
+            np.lib.format.write_array(buffer, arrays[name], allow_pickle=False)
+            info = zipfile.ZipInfo(name + ".npy", date_time=(1980, 1, 1, 0, 0, 0))
+            info.external_attr = 0o600 << 16
+            archive.writestr(info, buffer.getvalue())
+    return metadata["gas_gate"]

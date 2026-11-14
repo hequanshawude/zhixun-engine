@@ -265,14 +265,16 @@ def _prepare_package(pkg: CpuPackage, out: Path) -> CpuPackage:
     shutil.copytree(pkg.root, work)
     status = ensure_best_epoch_patch(work / "baselines" / "train.py")
     print(f"[init] 工作副本 {work.name}，train.py 补丁: {status}", flush=True)
-    if os.getenv("ZHIXUN_HYBRID_CHECKPOINT") == "1" and pkg.profile in ("B", "C"):
-        from .hybrid_checkpoint import patch_dual_model_source, patch_model_source
+    if os.getenv("ZHIXUN_HYBRID_CHECKPOINT") == "1" and pkg.profile in ("A", "B", "C"):
+        from .hybrid_checkpoint import patch_dual_model_source, patch_gas_model_source, patch_model_source
 
-        if pkg.profile == "C" and os.getenv("ZHIXUN_DUAL_C") == "1":
+        if pkg.profile == "A":
+            patch_gas_model_source(work / "baselines" / "model.py")
+        elif pkg.profile == "C" and os.getenv("ZHIXUN_DUAL_C") == "1":
             patch_dual_model_source(work / "baselines" / "model.py")
         else:
             patch_model_source(work / "baselines" / "model.py")
-        print("[init] B/C 检查点支持公开训练集生成的修正树", flush=True)
+        print("[init] 最终检查点支持公开训练集生成的预测修正", flush=True)
     train = work / "public" / "train.jsonl"
     if os.getenv("ZHIXUN_CHECKPOINT_V2") == "1" and pkg.profile == "B":
         from .checkpoint_v2 import balanced_b_train
@@ -416,21 +418,27 @@ def run_cpu_rounds(package: Path, out: Path, rounds: int = 10,
         fitting_script = Path(__file__).resolve().parents[1] / "scripts" / "scheme_v2.py"
         subprocess.run([sys.executable, str(fitting_script), "--profile", pkg.profile,
                         "--package", str(pkg.root), "--out", str(out)], check=True)
-        if (os.getenv("ZHIXUN_HYBRID_CHECKPOINT") == "1" and pkg.profile in ("B", "C")
+        if (os.getenv("ZHIXUN_HYBRID_CHECKPOINT") == "1" and pkg.profile in ("A", "B", "C")
                 and not (pkg.profile == "C" and os.getenv("ZHIXUN_DUAL_C") == "1")):
-            from .hybrid_checkpoint import embed_correction
+            import importlib.util
+            from .hybrid_checkpoint import embed_correction, embed_gas_gate
 
             correction = out / "predictor" / "correction.npz"
             if correction.exists():
                 hybrid_path = out / "hybrid-checkpoint.npz"
-                summary["hybrid"] = embed_correction(final_path, correction, hybrid_path)
+                summary["hybrid"] = (embed_gas_gate(final_path, correction, hybrid_path)
+                                     if pkg.profile == "A" else
+                                     embed_correction(final_path, correction, hybrid_path))
                 shutil.copyfile(hybrid_path, final_path)
+                module_spec = importlib.util.spec_from_file_location(
+                    "contest_final_model_" + pkg.profile, pkg.root / "baselines" / "model.py")
+                module = importlib.util.module_from_spec(module_spec)
+                module_spec.loader.exec_module(module)
                 sys.path.insert(0, str(pkg.root))
                 from baselines.data import read_dataset
-                from baselines.model import Model
                 from baselines.train import metrics
 
-                hybrid_model = Model.load(final_path)
+                hybrid_model = module.Model.load(final_path)
                 validation = read_dataset(pkg.validation, pkg.task,
                                           hybrid_model.meta["classes"], hybrid_model.meta["paths"])
                 hybrid_score = metrics(hybrid_model, validation)[pkg.metric]
@@ -438,7 +446,9 @@ def run_cpu_rounds(package: Path, out: Path, rounds: int = 10,
                 if abs(hybrid_score - selected) > 1e-8:
                     raise RuntimeError(f"混合检查点与原修正预测不一致: {hybrid_score} != {selected}")
                 summary["final"] = hybrid_score
-                summary["delta"] = pkg.baseline[pkg.metric] - hybrid_score
+                summary["delta"] = ((hybrid_score - pkg.baseline[pkg.metric])
+                                    if pkg.higher_is_better else
+                                    (pkg.baseline[pkg.metric] - hybrid_score))
                 summary["hybrid"]["validation_score"] = hybrid_score
         if (os.getenv("ZHIXUN_DUAL_C") == "1" and pkg.profile == "C"
                 and not dual_reference):

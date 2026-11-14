@@ -9,7 +9,7 @@ import numpy as np
 
 
 ROOT = Path(__file__).resolve().parents[1]
-RUN = ROOT / "out/dual-full-27b-20261114"
+RUN = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else ROOT / "out/dual-full-27b-20261114"
 summary = json.loads((RUN / "all-summary.json").read_text(encoding="utf-8"))
 result = {}
 for tag in ("a", "b", "c"):
@@ -33,6 +33,7 @@ if model.meta["task"]=="classification":
 else:
     score=float(np.sqrt(np.mean((prediction-data["y"])**2)))
 copy=checkpoint.parent/"final-roundtrip-verify.npz"
+if copy.exists(): copy.unlink()
 model.save(copy)
 other=Model.load(copy)
 drift=float(np.max(np.abs(prediction-other.predict(data["x"]))))
@@ -40,7 +41,8 @@ if drift>1e-9: raise RuntimeError("roundtrip changed output")
 print(json.dumps({"score":score,"rows":len(data["y"]),"max_roundtrip_drift":drift,
                   "checkpoint_sha256":hashlib.sha256(checkpoint.read_bytes()).hexdigest(),
                   "checkpoint_bytes":checkpoint.stat().st_size,
-                  "hybrid":hasattr(model,"forest"),"dual":hasattr(model,"reference_model")}))
+                  "hybrid":hasattr(model,"forest"),"gas_gate":hasattr(model,"gas_gate"),
+                  "dual":hasattr(model,"reference_model")}))
 '''
     run = subprocess.run([sys.executable, "-c", code, str(package), str(checkpoint), str(validation)],
                          cwd=package, text=True, capture_output=True, timeout=120)
