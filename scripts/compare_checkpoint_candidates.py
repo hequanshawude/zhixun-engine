@@ -16,14 +16,17 @@ from baselines.model import Model  # noqa: E402
 CANDIDATES = {
     "A": {
         "direct_27b": ROOT / "out/candidate-27b-direct-20261114/a/final-checkpoint.npz",
+        "checkpoint_v2_container": ROOT / "out/checkpoint-v2-27b-20261114/a/final-checkpoint.npz",
     },
     "B": {
         "direct_27b": ROOT / "out/candidate-27b-direct-20261114/b/final-checkpoint.npz",
         "balanced_27b": ROOT / "out/b-balanced-qwen27b-20261114/final-checkpoint.npz",
+        "checkpoint_v2_container": ROOT / "out/checkpoint-v2-27b-20261114/b/final-checkpoint.npz",
     },
     "C": {
         "direct_27b": ROOT / "out/candidate-27b-direct-20261114/c/final-checkpoint.npz",
         "readout_27b": ROOT / "out/c-qwen27b-distilled-20261114/checkpoint.npz",
+        "checkpoint_v2_container": ROOT / "out/checkpoint-v2-27b-20261114/c/final-checkpoint.npz",
     },
 }
 

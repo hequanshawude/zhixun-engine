@@ -265,11 +265,19 @@ def _prepare_package(pkg: CpuPackage, out: Path) -> CpuPackage:
     shutil.copytree(pkg.root, work)
     status = ensure_best_epoch_patch(work / "baselines" / "train.py")
     print(f"[init] 工作副本 {work.name}，train.py 补丁: {status}", flush=True)
+    train = work / "public" / "train.jsonl"
+    if os.getenv("ZHIXUN_CHECKPOINT_V2") == "1" and pkg.profile == "B":
+        from .checkpoint_v2 import balanced_b_train
+
+        train = work / "public" / "balanced_train.jsonl"
+        balance = balanced_b_train(work / "public" / "train.jsonl", train)
+        (out / "balance.json").write_text(json.dumps(balance, indent=2), encoding="utf-8")
+        print(f"[init] B 公开训练轴承均衡采样: {balance['sampled_rows']} 行", flush=True)
     return CpuPackage(
         root=work, profile=pkg.profile, task=pkg.task, metric=pkg.metric,
         higher_is_better=pkg.higher_is_better, baseline=pkg.baseline,
         base_checkpoint=work / "checkpoint.npz",
-        train=work / "public" / "train.jsonl",
+        train=train,
         validation=work / "public" / "validation.jsonl",
         baseline_learning_rate=pkg.baseline_learning_rate,
     )
@@ -323,6 +331,11 @@ def run_cpu_rounds(package: Path, out: Path, rounds: int = 10,
     print(f"[init] 起点检查点实测 {pkg.metric}={best:.4f}（training.json 记录 "
           f"{pkg.baseline[pkg.metric]:.4f}）", flush=True)
     start_metric = best
+    b_best = None
+    if os.getenv("ZHIXUN_CHECKPOINT_V2") == "1" and pkg.profile == "B":
+        from .checkpoint_v2 import b_device_metrics
+
+        b_best = b_device_metrics(pkg.root, accepted)
 
     for r in range(1, rounds + 1):
         history = [{"r": x["round"], "lr": x["learning_rate"], "ep": x["epochs"],
@@ -334,16 +347,25 @@ def run_cpu_rounds(package: Path, out: Path, rounds: int = 10,
                 "best_so_far": round(best, 4), "round": r, "rounds_left": rounds - r + 1,
                 "history": history, "baseline_learning_rate": pkg.baseline_learning_rate,
                 "allowed_learning_rate": LR_TABLE, "allowed_epochs": EPOCH_CHOICES}
+        if b_best is not None:
+            card["device_mean_rmse"] = round(b_best["device_mean_rmse"], 4)
+            card["training_sampling"] = "800 public train rows per bearing"
 
         lr, epochs, reason = policy.choose(card)
         round_dir = out / "rounds" / f"r{r:02d}"
         rep = train_round(pkg, accepted, round_dir, epochs, lr, profile_json=profile_json)
         value = rep["validation_after"][pkg.metric]
         better = (value > best) if pkg.higher_is_better else (value < best)
+        b_candidate = None
+        if b_best is not None:
+            b_candidate = b_device_metrics(pkg.root, round_dir / "checkpoint.npz")
+            better = better and b_candidate["device_mean_rmse"] < b_best["device_mean_rmse"]
         previous = best
         if better:
             best = value
             accepted = round_dir / "checkpoint.npz"
+            if b_candidate is not None:
+                b_best = b_candidate
 
         record = {"round": r, "metric": pkg.metric, "value": value,
                   "previous_best": previous, "best_after": best,
@@ -354,6 +376,8 @@ def run_cpu_rounds(package: Path, out: Path, rounds: int = 10,
                   "checkpoint": str(accepted),
                   "selected_epoch": rep.get("selected_epoch"),
                   "validation": rep["validation_after"]}
+        if b_candidate is not None:
+            record["device_validation"] = b_candidate
         ledger.append(record)
         print(f"[round {r:02d}] lr={lr} ep={epochs} -> {pkg.metric}={value:.4f} "
               f"{'ACCEPT' if better else 'REJECT'} ({value - previous:+.4f})  {reason}",
@@ -383,6 +407,29 @@ def run_cpu_rounds(package: Path, out: Path, rounds: int = 10,
         fitting_script = Path(__file__).resolve().parents[1] / "scripts" / "scheme_v2.py"
         subprocess.run([sys.executable, str(fitting_script), "--profile", pkg.profile,
                         "--package", str(pkg.root), "--out", str(out)], check=True)
+        if os.getenv("ZHIXUN_CHECKPOINT_V2") == "1" and pkg.profile == "C":
+            distill_script = Path(__file__).resolve().parents[1] / "scripts" / "distill_c_checkpoint.py"
+            distill_dir = out / "readout"
+            correction = out / "predictor" / "correction.npz"
+            if correction.exists():
+                proc = subprocess.run([sys.executable, str(distill_script),
+                                       "--package", str(pkg.root),
+                                       "--checkpoint", str(final_path),
+                                       "--correction", str(correction),
+                                       "--output", str(distill_dir)],
+                                      capture_output=True, text=True, encoding="utf-8", errors="replace")
+                if not (distill_dir / "report.json").exists():
+                    raise RuntimeError(f"C 读出层未生成报告: {(proc.stderr or proc.stdout)[-400:]}")
+                readout = json.loads((distill_dir / "report.json").read_text(encoding="utf-8"))
+                summary["readout"] = readout
+                if readout["status"] == "accepted" and proc.returncode == 0:
+                    shutil.copyfile(distill_dir / "checkpoint.npz", final_path)
+                    summary["final"] = readout["after"]["rmse"]
+                    summary["delta"] = pkg.baseline["rmse"] - summary["final"]
+                    subprocess.run([sys.executable, str(fitting_script), "--profile", pkg.profile,
+                                    "--package", str(pkg.root), "--out", str(out)], check=True)
+                elif readout["status"] != "rejected":
+                    raise RuntimeError(f"C 读出层失败: {(proc.stderr or proc.stdout)[-400:]}")
         selection = json.loads((out / "predictor" / "selection.json").read_text(encoding="utf-8"))
         summary["predictor"] = str(out / "predictor" / "predict_scheme.py")
         summary["predictor_selection"] = selection
@@ -390,6 +437,8 @@ def run_cpu_rounds(package: Path, out: Path, rounds: int = 10,
         # The official package remains mounted at /data. The writable copy is
         # only needed while fitting and would exceed the output size limit.
         shutil.rmtree(pkg.root / "public")
+    if b_best is not None:
+        summary["device_validation"] = b_best
     (out / "rounds-ledger.jsonl").write_text(
         "".join(json.dumps(x, ensure_ascii=False) + "\n" for x in ledger), encoding="utf-8")
     (out / "summary.json").write_text(json.dumps(summary, ensure_ascii=False, indent=2),
