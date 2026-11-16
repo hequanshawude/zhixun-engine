@@ -43,3 +43,21 @@ def b_device_metrics(package: Path, checkpoint: Path) -> dict:
     return {"pooled_rmse": float(np.sqrt(np.mean(error ** 2))),
             "device_mean_rmse": float(np.mean(list(per_device.values()))),
             "per_device": per_device}
+
+
+def c_subset_metrics(package: Path, checkpoint: Path) -> dict:
+    """Measure pooled and FD-subset RMSE on the official public validation."""
+    if str(package) not in sys.path:
+        sys.path.insert(0, str(package))
+    from baselines.data import read_dataset
+    from baselines.model import Model
+
+    model = Model.load(checkpoint)
+    data = read_dataset(package / "public/validation.jsonl", "regression", [], model.meta["paths"])
+    groups = np.asarray([item.split("_", 1)[0] for item in data["ids"]])
+    error = model.predict(data["x"]) - data["y"]
+    per_subset = {str(group): float(np.sqrt(np.mean(error[groups == group] ** 2)))
+                  for group in np.unique(groups)}
+    return {"pooled_rmse": float(np.sqrt(np.mean(error ** 2))),
+            "subset_mean_rmse": float(np.mean(list(per_subset.values()))),
+            "per_subset": per_subset}

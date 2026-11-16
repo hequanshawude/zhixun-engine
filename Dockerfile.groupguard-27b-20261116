@@ -1,0 +1,11 @@
+# Three official CPU packages, ten PyTRiO Qwen 27B decisions each.
+FROM zhixun-engine:preflight
+WORKDIR /app
+COPY selftrain ./selftrain
+COPY scripts/scheme_v2.py scripts/predict_scheme.py scripts/gas_pair_gate.py scripts/rul_tree_correction.py scripts/distill_c_checkpoint.py ./scripts/
+ENV ZHIXUN_SCHEME_V2=1 \
+    ZHIXUN_B_DEVICE_GUARD=1 \
+    ZHIXUN_C_SUBSET_GUARD=1 \
+    ZHIXUN_COMPAT_C_READOUT=1 \
+    ZHIXUN_OFFICIAL_CHECKPOINT=1
+CMD ["cpu", "--packages-root", "/data", "--out", "/out", "--rounds", "10", "--widen", "auto", "--driver", "llm", "--require-llm", "--model", "Qwen/Qwen3.8-27B", "--base-model", "Qwen/Qwen3.8-27B"]

@@ -343,10 +343,16 @@ def run_cpu_rounds(package: Path, out: Path, rounds: int = 10,
           f"{pkg.baseline[pkg.metric]:.4f}）", flush=True)
     start_metric = best
     b_best = None
-    if os.getenv("ZHIXUN_CHECKPOINT_V2") == "1" and pkg.profile == "B":
+    if (os.getenv("ZHIXUN_CHECKPOINT_V2") == "1" or
+            os.getenv("ZHIXUN_B_DEVICE_GUARD") == "1") and pkg.profile == "B":
         from .checkpoint_v2 import b_device_metrics
 
         b_best = b_device_metrics(pkg.root, accepted)
+    c_best = None
+    if os.getenv("ZHIXUN_C_SUBSET_GUARD") == "1" and pkg.profile == "C":
+        from .checkpoint_v2 import c_subset_metrics
+
+        c_best = c_subset_metrics(pkg.root, accepted)
 
     for r in range(1, rounds + 1):
         history = [{"r": x["round"], "lr": x["learning_rate"], "ep": x["epochs"],
@@ -371,12 +377,18 @@ def run_cpu_rounds(package: Path, out: Path, rounds: int = 10,
         if b_best is not None:
             b_candidate = b_device_metrics(pkg.root, round_dir / "checkpoint.npz")
             better = better and b_candidate["device_mean_rmse"] < b_best["device_mean_rmse"]
+        c_candidate = None
+        if c_best is not None:
+            c_candidate = c_subset_metrics(pkg.root, round_dir / "checkpoint.npz")
+            better = better and c_candidate["subset_mean_rmse"] < c_best["subset_mean_rmse"]
         previous = best
         if better:
             best = value
             accepted = round_dir / "checkpoint.npz"
             if b_candidate is not None:
                 b_best = b_candidate
+            if c_candidate is not None:
+                c_best = c_candidate
 
         record = {"round": r, "metric": pkg.metric, "value": value,
                   "previous_best": previous, "best_after": best,
@@ -389,6 +401,8 @@ def run_cpu_rounds(package: Path, out: Path, rounds: int = 10,
                   "validation": rep["validation_after"]}
         if b_candidate is not None:
             record["device_validation"] = b_candidate
+        if c_candidate is not None:
+            record["subset_validation"] = c_candidate
         ledger.append(record)
         print(f"[round {r:02d}] lr={lr} ep={epochs} -> {pkg.metric}={value:.4f} "
               f"{'ACCEPT' if better else 'REJECT'} ({value - previous:+.4f})  {reason}",
@@ -500,7 +514,8 @@ def run_cpu_rounds(package: Path, out: Path, rounds: int = 10,
                 "".join(json.dumps({"round": i + 1, "guided": guided_ledger[i],
                                      "reference": reference_ledger[i]}, ensure_ascii=False) + "\n"
                         for i in range(rounds)), encoding="utf-8")
-        if os.getenv("ZHIXUN_CHECKPOINT_V2") == "1" and pkg.profile == "C":
+        if (os.getenv("ZHIXUN_CHECKPOINT_V2") == "1" or
+                os.getenv("ZHIXUN_COMPAT_C_READOUT") == "1") and pkg.profile == "C":
             distill_script = Path(__file__).resolve().parents[1] / "scripts" / "distill_c_checkpoint.py"
             distill_dir = out / "readout"
             correction = out / "predictor" / "correction.npz"
@@ -530,8 +545,19 @@ def run_cpu_rounds(package: Path, out: Path, rounds: int = 10,
         # The official package remains mounted at /data. The writable copy is
         # only needed while fitting and would exceed the output size limit.
         shutil.rmtree(pkg.root / "public")
+    if os.getenv("ZHIXUN_OFFICIAL_CHECKPOINT") == "1":
+        import importlib.util
+        source_file = pkg.root / "baselines" / "model.py"
+        module_spec = importlib.util.spec_from_file_location(
+            "official_final_model_" + pkg.profile, source_file)
+        module = importlib.util.module_from_spec(module_spec)
+        module_spec.loader.exec_module(module)
+        module.Model.load(final_path)
+        summary["official_checkpoint_compatible"] = True
     if b_best is not None:
         summary["device_validation"] = b_best
+    if c_best is not None:
+        summary["subset_validation"] = c_best
     (out / "rounds-ledger.jsonl").write_text(
         "".join(json.dumps(x, ensure_ascii=False) + "\n" for x in ledger), encoding="utf-8")
     (out / "summary.json").write_text(json.dumps(summary, ensure_ascii=False, indent=2),
