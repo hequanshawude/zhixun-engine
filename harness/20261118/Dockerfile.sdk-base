@@ -1,0 +1,20 @@
+# Reuse only NumPy from the existing local runtime; none of its app or credentials.
+FROM zhixun-engine:groupguard-27b-local-20261116 AS numpy_runtime
+FROM python:3.10-slim
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONUTF8=1 \
+    OPENBLAS_NUM_THREADS=1 \
+    OMP_NUM_THREADS=1 \
+    MKL_NUM_THREADS=1 \
+    BASELINE_CPU_THREADS=1
+COPY --from=numpy_runtime /usr/local/lib/python3.10/site-packages/numpy /usr/local/lib/python3.10/site-packages/numpy
+COPY --from=numpy_runtime /usr/local/lib/python3.10/site-packages/numpy.libs /usr/local/lib/python3.10/site-packages/numpy.libs
+COPY --from=numpy_runtime /usr/local/lib/python3.10/site-packages/numpy-2.2.6.dist-info /usr/local/lib/python3.10/site-packages/numpy-2.2.6.dist-info
+COPY wheels/ /tmp/sdk-wheels/
+RUN python -m pip install --no-index --no-deps --no-cache-dir /tmp/sdk-wheels/contest_harness-1.0.2-py3-none-any.whl \
+    && rm -r /tmp/sdk-wheels
+WORKDIR /app
+COPY app/ /app/
+ENTRYPOINT ["python", "/app/harness.py"]
+CMD ["describe"]
