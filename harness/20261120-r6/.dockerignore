@@ -1,0 +1,9 @@
+**
+!Dockerfile
+!app/
+!app/**/
+!app/**/*.py
+!wheels/
+!wheels/*.whl
+**/__pycache__
+**/*.pyc

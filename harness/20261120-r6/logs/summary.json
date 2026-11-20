@@ -1,0 +1,63 @@
+{
+  "replay_id": "verify-20261120-2115",
+  "sdk": "1.0.4",
+  "archive": "zhixun-engine-sdk104-r6-20261120.tar",
+  "archive_sha256": "680b6330ca86c06a082ad326b897466b7a6a099dc768ff14b03372cfee53ba87",
+  "image_manifest": "sha256:7bf254ebfc754a387aad271a2bfd5a5ca34dceb75ea08ecc22a0451784691397",
+  "run_type": "offline_protocol_replay",
+  "actual_model_calls": 0,
+  "official_platform_evaluation": false,
+  "swanlab_url": "https://swanlab.cn/@hequan/zhixunyinqing/runs/x93cs9sv",
+  "cases": {
+    "a": {
+      "label": "A",
+      "metric": "macro_f1",
+      "rounds": 10,
+      "baseline": 0.7140297220788709,
+      "final": 0.8872867647675869,
+      "selected": "candidate-5",
+      "predictions": 1244,
+      "simulated_requests": 11
+    },
+    "b-named": {
+      "label": "B · 可分组",
+      "metric": "rmse_minutes",
+      "rounds": 10,
+      "baseline": 681.1598326043113,
+      "final": 397.21580311700535,
+      "selected": "candidate-8",
+      "predictions": 1679,
+      "simulated_requests": 10
+    },
+    "b-anonymous": {
+      "label": "B · 匿名",
+      "metric": "rmse_minutes",
+      "rounds": 10,
+      "baseline": 681.1598326043113,
+      "final": 599.5233377521956,
+      "selected": "candidate-9",
+      "predictions": 1679,
+      "simulated_requests": 10
+    },
+    "b-teacher": {
+      "label": "B · 注入教师异常",
+      "metric": "rmse_minutes",
+      "rounds": 10,
+      "baseline": 681.1598326043113,
+      "final": 563.3802238138122,
+      "selected": "candidate-9",
+      "predictions": 1679,
+      "simulated_requests": 10
+    },
+    "c": {
+      "label": "C",
+      "metric": "rmse_cycles",
+      "rounds": 10,
+      "baseline": 52.86857256611151,
+      "final": 46.9642613658624,
+      "selected": "candidate-2",
+      "predictions": 23049,
+      "simulated_requests": 11
+    }
+  }
+}

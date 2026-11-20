@@ -1,0 +1,224 @@
+{
+  "run_type": "offline_protocol_replay",
+  "scenario": "b-teacher",
+  "label": "B · 注入教师异常",
+  "metric": "rmse_minutes",
+  "rounds": 10,
+  "baseline": 681.1598326043113,
+  "final": 563.3802238138122,
+  "selected": "candidate-9",
+  "predictions": 1679,
+  "simulated_requests": 10,
+  "records": [
+    {
+      "round": 1,
+      "parent_artifact_id": "baseline",
+      "parent_primary": 681.1598326043113,
+      "candidate_primary": 621.3374909158646,
+      "selected": "candidate-1",
+      "parent_checkpoint_sha256": "sha256:c7d819fcee9d25459c583b5ffdb35593d4a47b524ed152d0226bf81a283314b4",
+      "selected_checkpoint_sha256": "sha256:4f0ea94ceae9050efceac02727e670e94f36649b9346a0188317f75a620b92ce",
+      "accepted": true,
+      "simulated_request_ids": [
+        "offline-test-B-1-1"
+      ],
+      "selected_primary": 621.3374909158646,
+      "configuration": {
+        "strategy": "train_only_anonymous_ridge_teacher_adam_readout",
+        "epochs": 5,
+        "learning_rate": 0.003,
+        "acceptance_policy": "improve_primary"
+      },
+      "teacher_source": "refit_from_selected_parent"
+    },
+    {
+      "round": 2,
+      "parent_artifact_id": "candidate-1",
+      "parent_primary": 621.3374909158646,
+      "candidate_primary": 610.4080905192191,
+      "selected": "candidate-2",
+      "parent_checkpoint_sha256": "sha256:4f0ea94ceae9050efceac02727e670e94f36649b9346a0188317f75a620b92ce",
+      "selected_checkpoint_sha256": "sha256:92e787e3f76e270a6191a68608745285c65a16478479cda8b2d718f4e08fdcd3",
+      "accepted": true,
+      "simulated_request_ids": [
+        "offline-test-B-2-1"
+      ],
+      "selected_primary": 610.4080905192191,
+      "configuration": {
+        "strategy": "train_only_anonymous_ridge_teacher_adam_readout",
+        "epochs": 5,
+        "learning_rate": 0.003,
+        "acceptance_policy": "improve_primary"
+      },
+      "teacher_source": "selected_parent"
+    },
+    {
+      "round": 3,
+      "parent_artifact_id": "candidate-2",
+      "parent_primary": 610.4080905192191,
+      "candidate_primary": 605.8453002542445,
+      "selected": "candidate-3",
+      "parent_checkpoint_sha256": "sha256:92e787e3f76e270a6191a68608745285c65a16478479cda8b2d718f4e08fdcd3",
+      "selected_checkpoint_sha256": "sha256:f6569962583012a951c6c3ada2b6f424dce21eee0f6b29a85b17e27083becd48",
+      "accepted": true,
+      "simulated_request_ids": [
+        "offline-test-B-3-1"
+      ],
+      "selected_primary": 605.8453002542445,
+      "configuration": {
+        "strategy": "train_only_anonymous_ridge_teacher_adam_readout",
+        "epochs": 5,
+        "learning_rate": 0.003,
+        "acceptance_policy": "improve_primary"
+      },
+      "teacher_source": "selected_parent"
+    },
+    {
+      "round": 4,
+      "parent_artifact_id": "candidate-3",
+      "parent_primary": 605.8453002542445,
+      "candidate_primary": 602.1466982307036,
+      "selected": "candidate-4",
+      "parent_checkpoint_sha256": "sha256:f6569962583012a951c6c3ada2b6f424dce21eee0f6b29a85b17e27083becd48",
+      "selected_checkpoint_sha256": "sha256:7788c807f4cecddf17637b063b67eac9ebbb5e8b40a45adc716fd32c71aa5288",
+      "accepted": true,
+      "simulated_request_ids": [
+        "offline-test-B-4-1"
+      ],
+      "selected_primary": 602.1466982307036,
+      "configuration": {
+        "strategy": "train_only_anonymous_ridge_teacher_adam_readout",
+        "epochs": 5,
+        "learning_rate": 0.003,
+        "acceptance_policy": "improve_primary"
+      },
+      "teacher_source": "selected_parent"
+    },
+    {
+      "round": 5,
+      "parent_artifact_id": "candidate-4",
+      "parent_primary": 602.1466982307036,
+      "candidate_primary": 571.1987278391176,
+      "selected": "candidate-5",
+      "parent_checkpoint_sha256": "sha256:7788c807f4cecddf17637b063b67eac9ebbb5e8b40a45adc716fd32c71aa5288",
+      "selected_checkpoint_sha256": "sha256:19bab9e61b4e9823e760c1feabb386c8d941b4db11a8e32d4fcb7aac0e11d436",
+      "accepted": true,
+      "simulated_request_ids": [
+        "offline-test-B-5-1"
+      ],
+      "selected_primary": 571.1987278391176,
+      "configuration": {
+        "strategy": "train_only_anonymous_ridge_teacher_adam_readout",
+        "epochs": 5,
+        "learning_rate": 0.003,
+        "acceptance_policy": "improve_primary"
+      },
+      "teacher_source": "refit_from_selected_parent"
+    },
+    {
+      "round": 6,
+      "parent_artifact_id": "candidate-5",
+      "parent_primary": 571.1987278391176,
+      "candidate_primary": 567.8982828160881,
+      "selected": "candidate-6",
+      "parent_checkpoint_sha256": "sha256:19bab9e61b4e9823e760c1feabb386c8d941b4db11a8e32d4fcb7aac0e11d436",
+      "selected_checkpoint_sha256": "sha256:2f447c77df3c22fc7561b69e353bce576c01e3b541bc863c4460e461be370694",
+      "accepted": true,
+      "simulated_request_ids": [
+        "offline-test-B-6-1"
+      ],
+      "selected_primary": 567.8982828160881,
+      "configuration": {
+        "strategy": "train_only_anonymous_ridge_teacher_adam_readout",
+        "epochs": 5,
+        "learning_rate": 0.003,
+        "acceptance_policy": "improve_primary"
+      },
+      "teacher_source": "selected_parent"
+    },
+    {
+      "round": 7,
+      "parent_artifact_id": "candidate-6",
+      "parent_primary": 567.8982828160881,
+      "candidate_primary": 565.748105620043,
+      "selected": "candidate-7",
+      "parent_checkpoint_sha256": "sha256:2f447c77df3c22fc7561b69e353bce576c01e3b541bc863c4460e461be370694",
+      "selected_checkpoint_sha256": "sha256:40231173d3c5f507aba2a82703f2bb66a9bf290b25393e245bdd644aa18fe627",
+      "accepted": true,
+      "simulated_request_ids": [
+        "offline-test-B-7-1"
+      ],
+      "selected_primary": 565.748105620043,
+      "configuration": {
+        "strategy": "train_only_anonymous_ridge_teacher_adam_readout",
+        "epochs": 5,
+        "learning_rate": 0.003,
+        "acceptance_policy": "improve_primary"
+      },
+      "teacher_source": "selected_parent"
+    },
+    {
+      "round": 8,
+      "parent_artifact_id": "candidate-7",
+      "parent_primary": 565.748105620043,
+      "candidate_primary": 565.1798297276692,
+      "selected": "candidate-8",
+      "parent_checkpoint_sha256": "sha256:40231173d3c5f507aba2a82703f2bb66a9bf290b25393e245bdd644aa18fe627",
+      "selected_checkpoint_sha256": "sha256:7876612aaa39bb73fe27a851433329498241e890484bb22e0af3590f3064a922",
+      "accepted": true,
+      "simulated_request_ids": [
+        "offline-test-B-8-1"
+      ],
+      "selected_primary": 565.1798297276692,
+      "configuration": {
+        "strategy": "train_only_anonymous_ridge_teacher_adam_readout",
+        "epochs": 5,
+        "learning_rate": 0.003,
+        "acceptance_policy": "improve_primary"
+      },
+      "teacher_source": "selected_parent"
+    },
+    {
+      "round": 9,
+      "parent_artifact_id": "candidate-8",
+      "parent_primary": 565.1798297276692,
+      "candidate_primary": 563.3802238138122,
+      "selected": "candidate-9",
+      "parent_checkpoint_sha256": "sha256:7876612aaa39bb73fe27a851433329498241e890484bb22e0af3590f3064a922",
+      "selected_checkpoint_sha256": "sha256:9e8d67e63d393d625071c3e79955c963204af348e6745d3bf4ae03d40f6f549e",
+      "accepted": true,
+      "simulated_request_ids": [
+        "offline-test-B-9-1"
+      ],
+      "selected_primary": 563.3802238138122,
+      "configuration": {
+        "strategy": "train_only_anonymous_ridge_teacher_adam_readout",
+        "epochs": 5,
+        "learning_rate": 0.003,
+        "acceptance_policy": "improve_primary"
+      },
+      "teacher_source": "selected_parent"
+    },
+    {
+      "round": 10,
+      "parent_artifact_id": "candidate-9",
+      "parent_primary": 563.3802238138122,
+      "candidate_primary": 564.8646961368478,
+      "selected": "candidate-9",
+      "parent_checkpoint_sha256": "sha256:9e8d67e63d393d625071c3e79955c963204af348e6745d3bf4ae03d40f6f549e",
+      "selected_checkpoint_sha256": "sha256:9e8d67e63d393d625071c3e79955c963204af348e6745d3bf4ae03d40f6f549e",
+      "accepted": false,
+      "simulated_request_ids": [
+        "offline-test-B-10-1"
+      ],
+      "selected_primary": 563.3802238138122,
+      "configuration": {
+        "strategy": "train_only_anonymous_ridge_teacher_adam_readout",
+        "epochs": 5,
+        "learning_rate": 0.003,
+        "acceptance_policy": "improve_primary"
+      },
+      "teacher_source": "selected_parent"
+    }
+  ]
+}

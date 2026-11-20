@@ -1,0 +1,224 @@
+{
+  "run_type": "offline_protocol_replay",
+  "scenario": "b-named",
+  "label": "B · 可分组",
+  "metric": "rmse_minutes",
+  "rounds": 10,
+  "baseline": 681.1598326043113,
+  "final": 397.21580311700535,
+  "selected": "candidate-8",
+  "predictions": 1679,
+  "simulated_requests": 10,
+  "records": [
+    {
+      "round": 1,
+      "parent_artifact_id": "baseline",
+      "parent_primary": 681.1598326043113,
+      "candidate_primary": 492.6488869443904,
+      "selected": "candidate-1",
+      "parent_checkpoint_sha256": "sha256:c7d819fcee9d25459c583b5ffdb35593d4a47b524ed152d0226bf81a283314b4",
+      "selected_checkpoint_sha256": "sha256:0ac61cd1a272465eda4df08e0db18dfa0664d01e9f7406850c9a2f48b618b7ac",
+      "accepted": true,
+      "simulated_request_ids": [
+        "offline-test-B-1-1"
+      ],
+      "selected_primary": 492.6488869443904,
+      "configuration": {
+        "strategy": "train_only_bearing_teacher_adam_readout",
+        "epochs": 5,
+        "learning_rate": 0.003,
+        "acceptance_policy": "improve_primary"
+      },
+      "teacher_source": "refit_from_selected_parent"
+    },
+    {
+      "round": 2,
+      "parent_artifact_id": "candidate-1",
+      "parent_primary": 492.6488869443904,
+      "candidate_primary": 450.0287142287514,
+      "selected": "candidate-2",
+      "parent_checkpoint_sha256": "sha256:0ac61cd1a272465eda4df08e0db18dfa0664d01e9f7406850c9a2f48b618b7ac",
+      "selected_checkpoint_sha256": "sha256:2a82e7590e891cca3cdf20d19ff91b77c0b666b4cd22d4aff345fd4e04121754",
+      "accepted": true,
+      "simulated_request_ids": [
+        "offline-test-B-2-1"
+      ],
+      "selected_primary": 450.0287142287514,
+      "configuration": {
+        "strategy": "train_only_bearing_teacher_adam_readout",
+        "epochs": 5,
+        "learning_rate": 0.003,
+        "acceptance_policy": "improve_primary"
+      },
+      "teacher_source": "selected_parent"
+    },
+    {
+      "round": 3,
+      "parent_artifact_id": "candidate-2",
+      "parent_primary": 450.0287142287514,
+      "candidate_primary": 419.278204251428,
+      "selected": "candidate-3",
+      "parent_checkpoint_sha256": "sha256:2a82e7590e891cca3cdf20d19ff91b77c0b666b4cd22d4aff345fd4e04121754",
+      "selected_checkpoint_sha256": "sha256:53e166545e45ff402caa5774358e2e45d22ccc8aed0eb2aeeed9f4464de91da9",
+      "accepted": true,
+      "simulated_request_ids": [
+        "offline-test-B-3-1"
+      ],
+      "selected_primary": 419.278204251428,
+      "configuration": {
+        "strategy": "train_only_bearing_teacher_adam_readout",
+        "epochs": 5,
+        "learning_rate": 0.003,
+        "acceptance_policy": "improve_primary"
+      },
+      "teacher_source": "selected_parent"
+    },
+    {
+      "round": 4,
+      "parent_artifact_id": "candidate-3",
+      "parent_primary": 419.278204251428,
+      "candidate_primary": 409.3646830826999,
+      "selected": "candidate-4",
+      "parent_checkpoint_sha256": "sha256:53e166545e45ff402caa5774358e2e45d22ccc8aed0eb2aeeed9f4464de91da9",
+      "selected_checkpoint_sha256": "sha256:cb0940c29f6945382423d4acd6fb44c59b4c16c52246321c517597dfc6cbc7bf",
+      "accepted": true,
+      "simulated_request_ids": [
+        "offline-test-B-4-1"
+      ],
+      "selected_primary": 409.3646830826999,
+      "configuration": {
+        "strategy": "train_only_bearing_teacher_adam_readout",
+        "epochs": 5,
+        "learning_rate": 0.003,
+        "acceptance_policy": "improve_primary"
+      },
+      "teacher_source": "selected_parent"
+    },
+    {
+      "round": 5,
+      "parent_artifact_id": "candidate-4",
+      "parent_primary": 409.3646830826999,
+      "candidate_primary": 398.51312568521126,
+      "selected": "candidate-5",
+      "parent_checkpoint_sha256": "sha256:cb0940c29f6945382423d4acd6fb44c59b4c16c52246321c517597dfc6cbc7bf",
+      "selected_checkpoint_sha256": "sha256:6d0ec804640dc8631fea3a4eead2ca238495b9040b9b0238423bb434457e4cbc",
+      "accepted": true,
+      "simulated_request_ids": [
+        "offline-test-B-5-1"
+      ],
+      "selected_primary": 398.51312568521126,
+      "configuration": {
+        "strategy": "train_only_bearing_teacher_adam_readout",
+        "epochs": 5,
+        "learning_rate": 0.003,
+        "acceptance_policy": "improve_primary"
+      },
+      "teacher_source": "selected_parent"
+    },
+    {
+      "round": 6,
+      "parent_artifact_id": "candidate-5",
+      "parent_primary": 398.51312568521126,
+      "candidate_primary": 398.47158680610573,
+      "selected": "candidate-6",
+      "parent_checkpoint_sha256": "sha256:6d0ec804640dc8631fea3a4eead2ca238495b9040b9b0238423bb434457e4cbc",
+      "selected_checkpoint_sha256": "sha256:8480adc6eddc645f7f1f00c6efca701bc6416a3d3701aa5aa1114babe9b3ffb7",
+      "accepted": true,
+      "simulated_request_ids": [
+        "offline-test-B-6-1"
+      ],
+      "selected_primary": 398.47158680610573,
+      "configuration": {
+        "strategy": "train_only_bearing_teacher_adam_readout",
+        "epochs": 5,
+        "learning_rate": 0.003,
+        "acceptance_policy": "improve_primary"
+      },
+      "teacher_source": "selected_parent"
+    },
+    {
+      "round": 7,
+      "parent_artifact_id": "candidate-6",
+      "parent_primary": 398.47158680610573,
+      "candidate_primary": 398.12161277706326,
+      "selected": "candidate-7",
+      "parent_checkpoint_sha256": "sha256:8480adc6eddc645f7f1f00c6efca701bc6416a3d3701aa5aa1114babe9b3ffb7",
+      "selected_checkpoint_sha256": "sha256:cc30b35ffa5e778cf5f56a17e97394d85f9bf3164f7f3ef4f84adc66e32e2450",
+      "accepted": true,
+      "simulated_request_ids": [
+        "offline-test-B-7-1"
+      ],
+      "selected_primary": 398.12161277706326,
+      "configuration": {
+        "strategy": "train_only_bearing_teacher_adam_readout",
+        "epochs": 5,
+        "learning_rate": 0.003,
+        "acceptance_policy": "improve_primary"
+      },
+      "teacher_source": "selected_parent"
+    },
+    {
+      "round": 8,
+      "parent_artifact_id": "candidate-7",
+      "parent_primary": 398.12161277706326,
+      "candidate_primary": 397.21580311700535,
+      "selected": "candidate-8",
+      "parent_checkpoint_sha256": "sha256:cc30b35ffa5e778cf5f56a17e97394d85f9bf3164f7f3ef4f84adc66e32e2450",
+      "selected_checkpoint_sha256": "sha256:b1685e9f445245d2f44f15431365087056ed4a8abd0785a6c050728605cf7df9",
+      "accepted": true,
+      "simulated_request_ids": [
+        "offline-test-B-8-1"
+      ],
+      "selected_primary": 397.21580311700535,
+      "configuration": {
+        "strategy": "train_only_bearing_teacher_adam_readout",
+        "epochs": 5,
+        "learning_rate": 0.003,
+        "acceptance_policy": "improve_primary"
+      },
+      "teacher_source": "selected_parent"
+    },
+    {
+      "round": 9,
+      "parent_artifact_id": "candidate-8",
+      "parent_primary": 397.21580311700535,
+      "candidate_primary": 398.29897872464454,
+      "selected": "candidate-8",
+      "parent_checkpoint_sha256": "sha256:b1685e9f445245d2f44f15431365087056ed4a8abd0785a6c050728605cf7df9",
+      "selected_checkpoint_sha256": "sha256:b1685e9f445245d2f44f15431365087056ed4a8abd0785a6c050728605cf7df9",
+      "accepted": false,
+      "simulated_request_ids": [
+        "offline-test-B-9-1"
+      ],
+      "selected_primary": 397.21580311700535,
+      "configuration": {
+        "strategy": "train_only_bearing_teacher_adam_readout",
+        "epochs": 5,
+        "learning_rate": 0.003,
+        "acceptance_policy": "improve_primary"
+      },
+      "teacher_source": "selected_parent"
+    },
+    {
+      "round": 10,
+      "parent_artifact_id": "candidate-8",
+      "parent_primary": 397.21580311700535,
+      "candidate_primary": 398.29897872464454,
+      "selected": "candidate-8",
+      "parent_checkpoint_sha256": "sha256:b1685e9f445245d2f44f15431365087056ed4a8abd0785a6c050728605cf7df9",
+      "selected_checkpoint_sha256": "sha256:b1685e9f445245d2f44f15431365087056ed4a8abd0785a6c050728605cf7df9",
+      "accepted": false,
+      "simulated_request_ids": [
+        "offline-test-B-10-1"
+      ],
+      "selected_primary": 397.21580311700535,
+      "configuration": {
+        "strategy": "train_only_bearing_teacher_adam_readout",
+        "epochs": 5,
+        "learning_rate": 0.003,
+        "acceptance_policy": "improve_primary"
+      },
+      "teacher_source": "selected_parent"
+    }
+  ]
+}

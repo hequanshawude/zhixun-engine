@@ -1,0 +1,25 @@
+{
+  "run_type": "offline_protocol_replay",
+  "expected_failure": true,
+  "frames": [
+    "history_request",
+    "model_request",
+    "model_request",
+    "round_failed"
+  ],
+  "calls": [
+    {
+      "id": "offline-test-A-1-1",
+      "max_tokens": 640,
+      "enable_thinking": false,
+      "history_attempts": 0
+    },
+    {
+      "id": "offline-test-A-1-2",
+      "max_tokens": 640,
+      "enable_thinking": false,
+      "history_attempts": 0
+    }
+  ],
+  "error": "PARTICIPANT_EXCEPTION"
+}
